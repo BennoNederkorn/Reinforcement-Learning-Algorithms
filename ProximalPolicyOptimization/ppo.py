@@ -54,12 +54,12 @@ minibatch_size: int = 0 # = batch_size // num_minibatches===the number of small 
 num_iterations: int = 0 # The number of the "Collect Data → Update Policy" cycle.
 
 # 
-def init_gymnasium(env_id, capture_video, run_name, gamma):
+def init_gymnasium(env_id, capture_video, run_name, gamma, **kwargs):
     if capture_video:
-        env = gym.make(env_id, render_mode="rgb_array")
+        env = gym.make(env_id, render_mode="rgb_array", **kwargs)
         env = gym.wrappers.RecordVideo(env, f"videos/{run_name}")
     else:
-        env = gym.make(env_id)
+        env = gym.make(env_id, **kwargs)
     env = gym.wrappers.FlattenObservation(env)  # deal with dm_control's Dict observation space
     env = gym.wrappers.RecordEpisodeStatistics(env)
     env = gym.wrappers.ClipAction(env)
