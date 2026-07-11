@@ -104,6 +104,7 @@ entropy_coef: float = 0.0         # coefficient of the entropy controls the weig
 # the ppo paper used 0.0 for continuous action spaces, because the continuous Normal distribution's variance already regulates exploration
 vf_coef: float = 0.5              # coefficient of the value function controls the relative importance of the value function loss 
 max_grad_norm: float = 0.5        # the maximum norm for the gradient clipping controls
+target_kl: float = None           # Emulate TRPO's strict KL divergence constraint
 
 
 # --- Dynamics Model ---
@@ -490,6 +491,14 @@ def main():
                         actor_action = agent.actor_mean(torch.FloatTensor(obs).to(device)).cpu().numpy()
                     
                     next_obs, reward, terminated, truncated, infos = env.step(actor_action)
+                    global_t += 1
+                    
+                    if "episode" in infos:
+                        print(f"Phase 2 (Step {global_t}): episodic_return={infos['episode']['r']}")
+                        writer.add_scalar("charts/episodic_return", infos["episode"]["r"], global_t)
+                        writer.add_scalar("charts/episodic_length", infos["episode"]["l"], global_t)
+                        mb_writer.add_scalar("charts/episodic_return", infos["episode"]["r"], global_t)
+                        mb_writer.add_scalar("charts/episodic_length", infos["episode"]["l"], global_t)
                     
                     # Ask EXPERT (MPC) what it would have done
                     expert_action = mpc.get_action(obs)
@@ -516,7 +525,10 @@ def main():
     
     batch_size = int(num_steps)
     minibatch_size = int(batch_size // num_minibatches)
-    num_iterations = mf_total_timesteps // batch_size
+    
+    # Calculate how many timesteps we have left to reach EXACTLY 1,000,000 total steps
+    remaining_timesteps = mf_total_timesteps - global_t
+    num_iterations = max(1, remaining_timesteps // batch_size)
     
     # We pass the same writer and run_name so PPO fine-tuning logs to the same Tensorboard run
     train_ppo(
@@ -539,14 +551,20 @@ def main():
         entropy_coef=entropy_coef, 
         vf_coef=vf_coef, 
         max_grad_norm=max_grad_norm, 
-        target_kl=None, 
+        target_kl=target_kl, 
         save_model=True, 
         run_name=run_name, 
         seed=seed,
-        global_step=mb_random_timesteps + mb_mpc_timesteps
+        global_step=global_t
     )
     
     print("Draft complete!")
 
 if __name__ == "__main__":
     main()
+
+
+
+# Conclusion: Initializing a model-free algorithm using a short-sighted Model-Based expert can actually permanently
+# handicap the agent by throwing it into a deep local optimum that is too hard to unlearn. This is a very common finding
+# when comparing Imitation Learning against from-scratch Reinforcement Learning!

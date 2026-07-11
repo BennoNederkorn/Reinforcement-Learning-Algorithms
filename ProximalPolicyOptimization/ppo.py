@@ -28,8 +28,8 @@ save_model: bool = True               # if True, model will be saved into the ru
 # The mb-mf paper used: "Ant-v5", "HalfCheetah-v5", "Hopper-v5" and "Swimmer-v5"
 # For the comparison I will use only "HalfCheetah-v5", "Hopper-v5" and "Swimmer-v5"
 env_id: str = "HalfCheetah-v5" # S ∈ R23, A ∈ R6
-env_id: str = "Hopper-v5"      # S ∈ R17, A ∈ R3
-env_id: str = "Swimmer-v5"     # S ∈ R16, A ∈ R2
+# env_id: str = "Hopper-v5"      # S ∈ R17, A ∈ R3
+# env_id: str = "Swimmer-v5"     # S ∈ R16, A ∈ R2
 
 total_timesteps: int = 1000000   # total timesteps of the experiments
 learning_rate: float = 3e-4      # learning rate of the optimizer
