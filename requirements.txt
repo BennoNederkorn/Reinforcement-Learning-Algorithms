@@ -1,0 +1,15 @@
+numpy>=1.26.4
+gymnasium
+gymnasium[classic-control]
+torch
+tyro
+tensorboard
+wandb
+mujoco
+imageio
+moviepy
+
+# for graphs:
+pandas
+matplotlib
+seaborn
